@@ -1,0 +1,2 @@
+# RSScan
+Enhanced barcode scanView
