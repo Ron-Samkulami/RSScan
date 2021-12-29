@@ -1,5 +1,5 @@
 //
-//  RSScanView.h
+//  RSScanVC.h
 //  RSScan
 //
 //  Created by Ron on 2021/12/28.
@@ -20,12 +20,12 @@ typedef void (^ScanFailerBlock)(NSError *error);
 typedef void (^ScanResultBlock)(NSString *scanResult);
 typedef void (^BuyScanDeviceBlock)(UIViewController *scanViewController);
 
-@interface RSScanView : UIViewController
+@interface RSScanVC : UIViewController
 
 /// 扫码取消
 @property (nonatomic,copy) ScanCancelBlock cancelBlock;
 /// 扫码失败
-@property (nonatomic,copy) ScanFailerBlock failerBlock;
+@property (nonatomic,copy) ScanFailerBlock faileBlock;
 /// 扫码成功
 @property (nonatomic,copy) ScanResultBlock resultBlock;
 /// 点击广告位
@@ -44,6 +44,6 @@ typedef void (^BuyScanDeviceBlock)(UIViewController *scanViewController);
 - (void)StartScan;
 
 //停止扫描
-- (void)StopScan;
+- (void)stopScan;
 
 @end

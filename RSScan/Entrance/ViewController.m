@@ -9,7 +9,7 @@
 //
 
 #import "ViewController.h"
-#import "RSScanView.h"
+#import "RSScanVC.h"
 
 @interface ViewController ()
 @property (nonatomic,strong) UILabel *resultLabel;
@@ -47,7 +47,7 @@
 }
 
 - (void)btnClick:(UIButton *)sender {
-    RSScanView *scanView=[[RSScanView alloc] init];
+    RSScanVC *scanView=[[RSScanVC alloc] init];
     switch (sender.tag) {
         case 1://扫描二维码
         {
@@ -55,6 +55,9 @@
             scanView.isShowAdvertising = YES;
             scanView.resultBlock = ^(NSString *result) {
                 self.resultLabel.text = result;
+            };
+            scanView.faileBlock = ^(NSError *error) {
+                self.resultLabel.text = error.domain;
             };
             [scanView StartScan];
             scanView.modalPresentationStyle = UIModalPresentationFullScreen;
@@ -67,6 +70,9 @@
             scanView.scanType = 1;
             scanView.resultBlock = ^(NSString *result) {
                 self.resultLabel.text = result;
+            };
+            scanView.faileBlock = ^(NSError *error) {
+                self.resultLabel.text = error.domain;
             };
             [scanView StartScan];
             scanView.modalPresentationStyle = UIModalPresentationFullScreen;
