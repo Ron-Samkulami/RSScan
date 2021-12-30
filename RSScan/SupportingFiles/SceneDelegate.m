@@ -9,6 +9,7 @@
 //
 
 #import "SceneDelegate.h"
+#import "RSScanNotificationConstants.h"
 
 @interface SceneDelegate ()
 
@@ -35,6 +36,8 @@
 - (void)sceneDidBecomeActive:(UIScene *)scene {
     // Called when the scene has moved from an inactive state to an active state.
     // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
+    NSLog(@"sceneDidBecomeActive");
+    [[NSNotificationCenter defaultCenter] postNotificationName:rsSceneDidBecomeActiveNotification object:nil];
 }
 
 
@@ -54,6 +57,8 @@
     // Called as the scene transitions from the foreground to the background.
     // Use this method to save data, release shared resources, and store enough scene-specific state information
     // to restore the scene back to its current state.
+    NSLog(@"sceneDidEnterBackground");
+    [[NSNotificationCenter defaultCenter] postNotificationName:rsSceneDidEnterBackgroundNotification object:nil];
 }
 
 

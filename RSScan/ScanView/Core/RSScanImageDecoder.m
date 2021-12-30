@@ -99,12 +99,12 @@
 
     CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
     // Lock the image buffer
-    CVPixelBufferLockBaseAddress(imageBuffer,0);
+    CVPixelBufferLockBaseAddress(imageBuffer,kCVPixelBufferLock_ReadOnly);
     // Get information about the image
     uint8_t *baseAddress     = (uint8_t *)CVPixelBufferGetBaseAddress(imageBuffer);
     size_t  bytesPerRow      = CVPixelBufferGetBytesPerRow(imageBuffer);
     size_t  width            = CVPixelBufferGetWidth(imageBuffer);
-//     size_t  height           = CVPixelBufferGetHeight(imageBuffer);
+//    size_t  height           = CVPixelBufferGetHeight(imageBuffer);
     NSInteger bytesPerPixel  =  bytesPerRow/width;
 
     // YUV 420 Rule
@@ -149,7 +149,7 @@
         }
     }
 
-    CVPixelBufferUnlockBaseAddress(imageBuffer,0);
+    CVPixelBufferUnlockBaseAddress(imageBuffer,kCVPixelBufferLock_ReadOnly);
 
     CMSampleTimingInfo sampleTime = {
         .duration               = CMSampleBufferGetDuration(sampleBuffer),
@@ -175,26 +175,34 @@
  解析图像
  */
 - (UIImage *)imageWithOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer{
-    
-    //解析图像
-    CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
-    CVPixelBufferLockBaseAddress(imageBuffer,0);
-#warning 偶发崩溃，转换出来的baseAddress为空
-    uint8_t *baseAddress = (uint8_t *)CVPixelBufferGetBaseAddress(imageBuffer);
-    size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
-    size_t width = CVPixelBufferGetWidth(imageBuffer);
-    size_t height = CVPixelBufferGetHeight(imageBuffer);
-    
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef newContext = CGBitmapContextCreate(baseAddress, width, height, 8, bytesPerRow, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
-    CGImageRef newImage = CGBitmapContextCreateImage(newContext);
-    CGContextRelease(newContext);
-    CGColorSpaceRelease(colorSpace);
-    
-    UIImage *image = [UIImage imageWithCGImage:newImage scale:1 orientation:UIImageOrientationRight];
-    
-    CGImageRelease(newImage);
-    CVPixelBufferUnlockBaseAddress(imageBuffer,0);
+    UIImage *image = nil;
+    @try {
+        
+        //解析图像
+        CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+        
+        size_t width = CVPixelBufferGetWidth(imageBuffer);
+        size_t height = CVPixelBufferGetHeight(imageBuffer);
+        
+        CVPixelBufferLockBaseAddress(imageBuffer,kCVPixelBufferLock_ReadOnly);
+    #warning 偶发崩溃，转换出来的baseAddress为空
+        uint8_t *baseAddress = (uint8_t *)CVPixelBufferGetBaseAddress(imageBuffer);
+        size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
+        
+        CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+        CGContextRef newContext = CGBitmapContextCreate(baseAddress, width, height, 8, bytesPerRow, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+        CGImageRef newImage = CGBitmapContextCreateImage(newContext);
+        CGContextRelease(newContext);
+        CGColorSpaceRelease(colorSpace);
+        
+        image = [UIImage imageWithCGImage:newImage scale:1 orientation:UIImageOrientationRight];
+        
+        CGImageRelease(newImage);
+        CVPixelBufferUnlockBaseAddress(imageBuffer,kCVPixelBufferLock_ReadOnly);
+
+    } @catch (NSException *exception) {
+        NSLog(@"%@", exception.reason);
+    }
     
     return image;
 }

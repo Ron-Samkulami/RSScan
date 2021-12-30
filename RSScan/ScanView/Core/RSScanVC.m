@@ -20,6 +20,7 @@
 #import <PhotosUI/PhotosUI.h>
 #import "BarCodeAudioManager.h"
 #import "RSScanImageDecoder.h"
+#import "RSScanNotificationConstants.h"
 
 #define screenW [[UIScreen mainScreen] bounds].size.width //屏幕宽度
 #define screenH [[UIScreen mainScreen] bounds].size.height //屏幕高度
@@ -151,12 +152,13 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.isPlayMusic=YES;
+    [self addObserver];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     [self startScanAnimation];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationChanged) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
+    
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
@@ -174,6 +176,19 @@
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+#pragma mark - Observer
+
+- (void)addObserver {
+    //监听屏幕旋转
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationChanged) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
+    //监听Scene进入前台
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(sceneDidBecomeActiveNotification:) name:rsSceneDidBecomeActiveNotification object:nil];
 }
 
 #pragma mark - 开始扫码
@@ -203,9 +218,33 @@
     //设置有效识别区域
     [self setValidateZone];
     //开启会话
-    [_session startRunning];
+    [self startSession];
     //开启扫码计时器
     [self scheduledTimer];
+}
+
+/**
+ 判断相机权限后再开启会话
+ */
+- (void)startSession {
+    AVAuthorizationStatus authStatus = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
+    if (authStatus == AVAuthorizationStatusRestricted || authStatus == AVAuthorizationStatusDenied) {
+        //创建弹窗
+        UIAlertController *alertVC = [UIAlertController alertControllerWithTitle:@"提示" message:@"请在iPhone的“设置”-“隐私”-“相机”功能中，找到“RSScan”打开相机访问权限" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            NSLog(@"OK Action");
+        }];
+        [alertVC addAction:okAction];
+        
+        //显示弹窗
+        UIWindowScene *windowScene = (UIWindowScene *)[[[UIApplication sharedApplication] connectedScenes] allObjects][0];
+        UIWindow *window = windowScene.windows[0];
+        alertVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
+        [window.rootViewController presentViewController:alertVC animated:NO completion:nil];
+        return;
+    }
+    
+    [_session startRunning];
 }
 
 /**
@@ -484,25 +523,7 @@
         _metaOutput.metadataObjectTypes = @[AVMetadataObjectTypeEAN13Code,  AVMetadataObjectTypeEAN8Code, AVMetadataObjectTypeCode128Code,AVMetadataObjectTypeUPCECode,AVMetadataObjectTypeCode39Code,AVMetadataObjectTypeCode39Mod43Code,AVMetadataObjectTypeCode93Code,AVMetadataObjectTypeITF14Code,AVMetadataObjectTypeInterleaved2of5Code];
     } else {
         //兼容二维码和条形码（条形码只有中间区域有效识别）
-        _metaOutput.metadataObjectTypes=@[AVMetadataObjectTypeQRCode,AVMetadataObjectTypeEAN13Code, AVMetadataObjectTypeEAN8Code, AVMetadataObjectTypeCode128Code,AVMetadataObjectTypeUPCECode,AVMetadataObjectTypeCode39Code,AVMetadataObjectTypeCode39Mod43Code,AVMetadataObjectTypeCode93Code,AVMetadataObjectTypePDF417Code,AVMetadataObjectTypeAztecCode,AVMetadataObjectTypeITF14Code,AVMetadataObjectTypeInterleaved2of5Code,AVMetadataObjectTypeDataMatrixCode];
-    }
-}
-
-#pragma mark - 监听屏幕旋转
-- (void)orientationChanged {
-    //调整旋转预览图方向
-    _preview.connection.videoOrientation = [self videoOrientationFromCurrentDeviceOrientation];
-    //预览视图
-    _preview.frame=self.view.layer.bounds;
-    _flashBtn.frame=CGRectMake(screenW-flashBtnWH-marginSpace, flashToBar, flashBtnWH, flashBtnWH);
-    //设置底部相关视图尺寸
-    [self setFrameForBottomView];
-    
-    //扫码框、背景图
-    if (self.scanType == 0) {
-        [self setScanZoneW:defaultScanZoneQRW H:defaultScanZoneQRH];
-    } else {
-        [self setScanZoneW:defaultScanZoneBARW H:defaultScanZoneBARH];
+        _metaOutput.metadataObjectTypes=@[AVMetadataObjectTypeQRCode,AVMetadataObjectTypePDF417Code,AVMetadataObjectTypeAztecCode,AVMetadataObjectTypeDataMatrixCode,AVMetadataObjectTypeEAN13Code, AVMetadataObjectTypeEAN8Code, AVMetadataObjectTypeCode128Code,AVMetadataObjectTypeUPCECode,AVMetadataObjectTypeCode39Code,AVMetadataObjectTypeCode39Mod43Code,AVMetadataObjectTypeCode93Code,AVMetadataObjectTypeITF14Code,AVMetadataObjectTypeInterleaved2of5Code];
     }
 }
 
@@ -542,9 +563,9 @@
         self.canCaptureImage = NO;
         __weak __typeof__(self) weakSelf = self;
         [self.imageDecoder decodeSampleBuffer:sampleBuffer processing:_filterPreview success:^(NSString *str) {
-            __typeof__(self) self = weakSelf;
-            if (self.isDealingScanResult == NO) {
-                self.isDealingScanResult = YES;
+            __strong __typeof__(self) strongSelf = weakSelf;
+            if (strongSelf.isDealingScanResult == NO) {
+                strongSelf.isDealingScanResult = YES;
 #if DEBUG
                 NSLog(@"RSScanView-totalScanTime: %.1f __ BY: ZXingWrapper __ Result: %@",self.totalScanTimeInterval,str);
                 str = [NSString stringWithFormat:@"%.1fs_Z: %@",self.totalScanTimeInterval,str];
@@ -579,7 +600,9 @@
         
         self.totalScanTimeInterval = 0;
         self.isDealingScanResult = NO;
-        [_session startRunning];
+        //设置有效识别区域
+        [self setValidateZone];
+        [self startSession];
         [self scheduledTimer];
     }
 }
@@ -808,6 +831,36 @@
         [self.decodeTimer invalidate];
         self.decodeTimer = nil;
     }
+}
+
+
+#pragma mark - 监听事件
+/**
+ 设备旋转
+ */
+- (void)orientationChanged {
+    //调整旋转预览图方向
+    _preview.connection.videoOrientation = [self videoOrientationFromCurrentDeviceOrientation];
+    //预览视图
+    _preview.frame=self.view.layer.bounds;
+    _flashBtn.frame=CGRectMake(screenW-flashBtnWH-marginSpace, flashToBar, flashBtnWH, flashBtnWH);
+    //设置底部相关视图尺寸
+    [self setFrameForBottomView];
+    
+    //扫码框、背景图
+    if (self.scanType == 0) {
+        [self setScanZoneW:defaultScanZoneQRW H:defaultScanZoneQRH];
+    } else {
+        [self setScanZoneW:defaultScanZoneBARW H:defaultScanZoneBARH];
+    }
+}
+
+/**
+ scene回到前台
+ */
+- (void)sceneDidBecomeActiveNotification:(NSNotification *)notification {
+    //重新设置识别范围，否则切换后台再打开会奔溃
+    [self setValidateZone];
 }
 
 #pragma mark - other
