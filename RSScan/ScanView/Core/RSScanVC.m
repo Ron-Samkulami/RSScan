@@ -187,6 +187,8 @@
 - (void)addObserver {
     //监听屏幕旋转
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationChanged) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
+    //监听Scene进入后台
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(sceneDidEnterBackgroundNotification:) name:rsSceneDidEnterBackgroundNotification object:nil];
     //监听Scene进入前台
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(sceneDidBecomeActiveNotification:) name:rsSceneDidBecomeActiveNotification object:nil];
 }
@@ -856,11 +858,25 @@
 }
 
 /**
+ scene进入后台
+ */
+- (void)sceneDidEnterBackgroundNotification:(NSNotification *)notification {
+    [_session stopRunning];
+    [self endTiming];
+}
+
+/**
  scene回到前台
  */
 - (void)sceneDidBecomeActiveNotification:(NSNotification *)notification {
-    //重新设置识别范围，否则切换后台再打开会奔溃
+    //重新设置识别区域，否则会导致奔溃
     [self setValidateZone];
+    //开启会话
+    [self startSession];
+    //开启扫码计时器
+    [self scheduledTimer];
+    //开启扫描动画
+    [self startScanAnimation];
 }
 
 #pragma mark - other
