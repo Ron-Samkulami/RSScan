@@ -20,7 +20,6 @@
 #import <PhotosUI/PhotosUI.h>
 #import "BarCodeAudioManager.h"
 #import "RSScanImageDecoder.h"
-#import "RSScanNotificationConstants.h"
 
 #define screenW [[UIScreen mainScreen] bounds].size.width //屏幕宽度
 #define screenH [[UIScreen mainScreen] bounds].size.height //屏幕高度
@@ -188,9 +187,9 @@
     //监听屏幕旋转
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationChanged) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
     //监听Scene进入后台
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(sceneDidEnterBackgroundNotification:) name:rsSceneDidEnterBackgroundNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(sceneDidEnterBackgroundNotification:) name:UISceneDidEnterBackgroundNotification object:nil];
     //监听Scene进入前台
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(sceneDidBecomeActiveNotification:) name:rsSceneDidBecomeActiveNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(sceneDidBecomeActiveNotification:) name:UISceneDidActivateNotification object:nil];
 }
 
 #pragma mark - 开始扫码
@@ -563,9 +562,9 @@
     //捕捉图像进行软解码
     if (self.canCaptureImage == YES) {
         self.canCaptureImage = NO;
-        __weak __typeof__(self) weakSelf = self;
+        __weak __typeof(self) weakSelf = self;
         [self.imageDecoder decodeSampleBuffer:sampleBuffer processing:_filterPreview success:^(NSString *str) {
-            __strong __typeof__(self) strongSelf = weakSelf;
+            __strong __typeof (weakSelf) strongSelf = weakSelf;
             if (strongSelf.isDealingScanResult == NO) {
                 strongSelf.isDealingScanResult = YES;
 #if DEBUG
@@ -700,14 +699,15 @@
 
 #pragma mark - 选择本地图片
 - (void)LocalPhoto {
-    __weak typeof(RSScanVC *) weakSelf = self;
+    __weak __typeof(self) weakSelf = self;
     //判断权限
     PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
     if (status == PHAuthorizationStatusRestricted ||
         status == PHAuthorizationStatusDenied||status==PHAuthorizationStatusNotDetermined) {
         [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status){
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
             if (status==PHAuthorizationStatusAuthorized) {
-                [weakSelf initImagePickerController];
+                [strongSelf initImagePickerController];
             }
         }];
     } else {

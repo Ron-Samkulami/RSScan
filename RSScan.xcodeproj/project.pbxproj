@@ -727,7 +727,6 @@
 		825922E2277B131B00EEEDFE /* RSScan.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = RSScan.bundle; sourceTree = "<group>"; };
 		825922E4277B17EC00EEEDFE /* UIView+RSScaningEffect.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIView+RSScaningEffect.h"; sourceTree = "<group>"; };
 		825922E5277B17EC00EEEDFE /* UIView+RSScaningEffect.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIView+RSScaningEffect.m"; sourceTree = "<group>"; };
-		825922EE277D92F900EEEDFE /* RSScanNotificationConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RSScanNotificationConstants.h; path = ../../../../../../../Documents/RSScanNotificationConstants.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1554,7 +1553,6 @@
 				8259200F277B0F6B00EEEDFE /* BarCodeAudioManager.m */,
 				825922E4277B17EC00EEEDFE /* UIView+RSScaningEffect.h */,
 				825922E5277B17EC00EEEDFE /* UIView+RSScaningEffect.m */,
-				825922EE277D92F900EEEDFE /* RSScanNotificationConstants.h */,
 			);
 			path = Core;
 			sourceTree = "<group>";
