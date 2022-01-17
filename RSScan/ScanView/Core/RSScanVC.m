@@ -289,20 +289,6 @@
     [_flashBtn setTag:flashBtnID];
     [_flashBtn addTarget:self action:@selector(buttonClick:) forControlEvents:UIControlEventTouchUpInside];
     
-#if DEBUG
-    //    滤镜预览窗
-    _filterPreview = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenW, screenH*0.4)];
-    _filterPreview.hidden = YES;
-    
-    _filterPreviewCtrBtn=[[UIButton alloc] init];
-    [_filterPreviewCtrBtn setTitle:@"打开滤镜窗" forState:UIControlStateNormal];
-    [_filterPreviewCtrBtn setTitle:@"关闭滤镜窗" forState:UIControlStateSelected];
-    _filterPreviewCtrBtn.frame=CGRectMake(screenW-flashBtnWH*3-marginSpace, flashToBar*2, flashBtnWH*3, flashBtnWH);
-    [_filterPreviewCtrBtn setTag:filterPreviewCtrBtnID];
-    [_filterPreviewCtrBtn addTarget:self action:@selector(buttonClick:) forControlEvents:UIControlEventTouchUpInside];
-#else
-#endif
-    
     //扫码框
     _scanRect = [[UIImageView alloc]init];
     _scanRect.frame = CGRectMake((screenW-width)/2, (screenH-height)/2.0-statusBarH, width, height);
@@ -314,6 +300,21 @@
     _centerTipsLabel.frame=CGRectMake(CGRectGetMinX(_scanRect.frame), CGRectGetMaxY(_scanRect.frame)+20, _scanRect.frame.size.width,tipsLabelH);
     NSString *scanTips = self.scanType == 0 ? @"请将二维码放入框内，即可自动扫描" : @"请将条形码放入框内，即可自动扫描";
     [self setLabelFontTitleColor:_centerTipsLabel FontSize:labelFontSize Color:[UIColor whiteColor] Title:scanTips];
+    
+    
+#if DEBUG
+    //    滤镜预览窗
+    _filterPreview = [[UIImageView alloc] initWithFrame:CGRectMake(_scanRect.frame.origin.x, _scanRect.frame.origin.y, _scanRect.frame.size.width, _scanRect.frame.size.height)];
+    _filterPreview.hidden = YES;
+    
+    _filterPreviewCtrBtn=[[UIButton alloc] init];
+    [_filterPreviewCtrBtn setTitle:@"打开滤镜窗" forState:UIControlStateNormal];
+    [_filterPreviewCtrBtn setTitle:@"关闭滤镜窗" forState:UIControlStateSelected];
+    _filterPreviewCtrBtn.frame=CGRectMake(screenW-flashBtnWH*3-marginSpace, flashToBar*2, flashBtnWH*3, flashBtnWH);
+    [_filterPreviewCtrBtn setTag:filterPreviewCtrBtnID];
+    [_filterPreviewCtrBtn addTarget:self action:@selector(buttonClick:) forControlEvents:UIControlEventTouchUpInside];
+#else
+#endif
     
     //底部按钮背景
     _buttonsView = [[UIView alloc] init];
@@ -405,7 +406,6 @@
     //设置ZXing图像识别范围（解析工具类内会做坐标转换等处理）
     self.imageDecoder.cropRect = CGRectMake(_scanRect.frame.origin.x, _scanRect.frame.origin.y, _scanRect.frame.size.width, _scanRect.frame.size.height);
     
-    [_filterPreview setFrame:CGRectMake(_scanRect.frame.origin.x, _scanRect.frame.origin.y, _scanRect.frame.size.width, _scanRect.frame.size.height)];
 }
 
 /**

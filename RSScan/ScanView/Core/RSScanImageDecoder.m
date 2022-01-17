@@ -34,10 +34,13 @@
     //滤镜处理,增强画质
     image = [self enhanceImage:image];
     
+#if DEBUG
     //预览增强效果
     dispatch_async(dispatch_get_main_queue(), ^{
         previewImageView.image = image;
     });
+#else
+#endif
     
     //二值化处理
     image = [self convertToGrayScaleWithImage:image];
@@ -54,13 +57,13 @@
 - (void)setCropRect:(CGRect)cropRect {
     _cropRect = cropRect;
     /**
-     buffer的方向是右转90度，需要将裁剪框进行坐标转换，并结合分辨率计算裁剪框的像素坐标
+     buffer的方向相对于UIKit的坐标是右转90度，需要将裁剪框进行坐标转换，并结合分辨率计算裁剪框的像素坐标
      */
     if (self.imageResolution.imageResolutionW*self.imageResolution.imageResolutionH != 0) {
-        _cropPiexlX = self.imageResolution.imageResolutionW/screenH * self.cropRect.origin.y;
-        _cropPiexlY = self.imageResolution.imageResolutionH/screenW * (screenW-self.cropRect.origin.x-self.cropRect.size.width);
-        _cropPiexlW = self.imageResolution.imageResolutionW/screenH * self.cropRect.size.height;
-        _cropPiexlH = self.imageResolution.imageResolutionH/screenW * self.cropRect.size.width;
+        _cropPiexlX = self.cropRect.origin.y/screenH * self.imageResolution.imageResolutionW;
+        _cropPiexlY = (screenW-self.cropRect.origin.x-self.cropRect.size.width)/screenW * self.imageResolution.imageResolutionH;
+        _cropPiexlW = self.cropRect.size.height/screenH * self.imageResolution.imageResolutionW;
+        _cropPiexlH = self.cropRect.size.width/screenW * self.imageResolution.imageResolutionH;
     }
     /**
      当裁剪框尺寸发生改变时，需要重载裁剪时的pixbuffer和videoinfo
@@ -185,7 +188,7 @@
         size_t height = CVPixelBufferGetHeight(imageBuffer);
         
         CVPixelBufferLockBaseAddress(imageBuffer,kCVPixelBufferLock_ReadOnly);
-    #warning 偶发崩溃，转换出来的baseAddress为空
+    #warning 偶发崩溃，Empty BaseAddress
         uint8_t *baseAddress = (uint8_t *)CVPixelBufferGetBaseAddress(imageBuffer);
         size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
         
